@@ -1,9 +1,9 @@
+// Belum berfingsi ini masih Duplikat
 const express = require("express");
 require("dotenv").config();
 const { OpenAI } = require("openai");
 
-const app = express();
-app.use(express.json());
+const router = express.Router();
 
 const openai = new OpenAI({ apiKey: process.env.API_KEY });
 const assistantId = process.env.ASSISTANT_ID;
@@ -24,11 +24,11 @@ const createThread = async () => {
 const addMessage = async (threadId, message) => {
   try {
     console.log("Adding a message to the thread...", threadId);
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Ganti dengan model yang Anda inginkan
-      messages: [{ role: "user", content: message }],
+    const response = await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: message,
     });
-    return response.data.choices[0].message.content;
+    return response;
   } catch (error) {
     console.error("Error adding message:", error);
     throw error;
@@ -70,7 +70,7 @@ const checkingStatus = async (res, threadId, runId) => {
   }
 };
 
-app.get("/thread", (req, res) => {
+router.get("/thread", (req, res) => {
   createThread()
     .then((thread) => {
       res.json({ threadId: thread.id });
@@ -80,7 +80,7 @@ app.get("/thread", (req, res) => {
     });
 });
 
-app.post("/message", (req, res) => {
+router.post("/message", (req, res) => {
   const { message, threadId } = req.body;
   if (!message || !threadId) {
     return res
@@ -104,7 +104,4 @@ app.post("/message", (req, res) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+module.exports = router;
